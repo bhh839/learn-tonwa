@@ -1,0 +1,146 @@
+-- 工单
+ID Ticket (
+    id,
+    discription TEXT,
+    creator ID Staff,
+    sys (create),
+);
+
+ID TicketSheet (
+    id,
+    creator ID Staff,
+    sys (create),
+);
+
+IX IxTicketSheet (
+    ix TicketSheet,
+    xi Ticket, 
+);
+
+-- 工单流转节点
+ID TicketNode MINUTEID (
+    id,
+    ticket ID Ticket,
+    prev ID TicketNode DEFAULT 0,   -- 上一个节点
+    state ID TicketState,           -- 
+    operator ID Staff,              -- 操作人
+
+    INDEX prev(prev) UNIQUE,
+    INDEX ticket(ticket, id) UNIQUE,
+);
+
+IDX DxTicket (
+    id,                             -- Ticket 工单
+    node ID TicketNode,             -- 当前节点
+    assessor ID Staff,              -- 评估人
+    done ID Staff,                  -- 完成人
+);
+
+-- 评估
+IX IxTicketAssess (
+    ix Ticket,
+    xi TicketAssess,                -- 评估
+    estimate INT,
+    value INT,
+    assessor ID Staff,              -- 评估人
+);
+
+ID TicketType (
+    id,
+    KEY name CHAR(50),
+    vice CHAR(200),
+    firstState ID TicketState,
+);
+
+ID TicketState (
+    id,
+    main ID TicketType,
+    name CHAR(50),
+    vice CHAR(200),
+    INDEX main_name(main, name) UNIQUE,
+);
+
+IX IxStateNext (
+    ix TicketState,
+    xi TicketState,
+);
+
+ID TicketAssess (
+    id,
+    name CHAR(50),
+    vice CHAR(200),
+    min INT,
+    max INT,
+);
+
+ENUM TicketBox (todo=1, toAssess=2);
+-- 我的待办，在办，评估，完成之前，都列在这里
+IX IxStaffTicket (
+    ix Staff,
+    xi Ticket,
+    node ID TicketNode,         -- 当前节点
+);
+
+ACT SaveTicket(
+    to ID,                  -- to staff
+    discription TEXT,       
+) {
+    VAR ticket ID = ID(Ticket new);
+    WITH Ticket as a ID=ticket 
+        SET a.discription=discription
+            , a.creator=(SELECT u.xi FROM IxUserObject as u WHERE u.ix=$user);
+    WITH IxStaffTicket IX=to XI=ticket;
+};
+
+QUERY MyTickets()
+RETURNS ret (
+    ticket ID,
+    discription TEXT,
+    node ID,
+    prev ID TicketNode,   -- 上一个节点
+    state ID TicketState,           -- 
+    operator ID Staff,              -- 操作人
+    from ID Staff,
+) {
+    INTO ret SELECT t.id as ticket, t.discription
+        , a.node, n.prev, n.state, n.operator
+        , t.creator as [from]
+        FROM IxStaffTicket as a
+            JOIN Ticket as t ON a.xi=t.id
+            LEFT JOIN TicketNode as n ON n.id=a.node
+            JOIN IxUserObject as b ON b.xi=a.ix
+        WHERE b.ix=$user;
+};
+
+ACT SaveTicketType (
+    typeName CHAR(50),
+    typeVice TEXT,
+    ARR states (
+        stateName CHAR(50),
+        stateVice TEXT,
+    )
+)
+RETURNS ret (
+    id ID
+) {
+    VAR typeId ID = ID(TicketType new KEY name=typeName);
+    VAR pState ID = 0;
+    WITH TicketType ID=typeId SET vice=typeVice;
+    FOR states {
+        VAR stateId ID;
+        SET stateId=NULL;
+        SET stateId=a.id FROM TicketState as a WHERE a.main=typeId AND a.name=stateName;
+        IF stateId IS NULL {
+            SET stateId = ID(TicketState new);
+        }
+        WITH TicketState as a ID=stateId SET a.name=stateName, a.vice=stateVice, a.main=typeId;
+        IF pState = 0 {
+            WITH TicketType ID=typeId SET firstState=stateId;
+        }
+        ELSE {
+            WITH IxStateNext IX=pState XI=stateId;
+            SET pState=stateId;
+        }
+    }
+    INTO ret SELECT typeId as id;
+};

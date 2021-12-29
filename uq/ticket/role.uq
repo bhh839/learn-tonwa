@@ -1,0 +1,11 @@
+-- User Staff,
+
+ID #Object (
+    id,
+);
+
+IX IxUserObject (
+    IX user,
+    XI Object INDEX,
+    on TINYINT DEFAULT 0,
+);

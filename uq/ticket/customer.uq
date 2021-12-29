@@ -1,0 +1,66 @@
+ID Customer ver 0.6 GLOBAL (
+	id,
+	KEY no,
+	name CHAR(50),
+	tel CHAR(50),
+	address CHAR(500),
+	vice CHAR(100),
+	status INT,
+);
+
+IDX CustomerAccount (
+	id,
+	sumAmount DEC(18,4),
+);
+
+IX CustomerStaff (
+	ix Customer,			-- Customer,
+	xi,						-- Staff
+);
+
+ACT UpdateCustomer ver 0.1 (
+	id ID,
+	name CHAR(50),
+	tel CHAR(50),
+	address CHAR(500),
+	vice CHAR(100),
+	status INT,
+) {
+	WITH Customer as a ID=id SET a.name=name,a.tel=tel,a.address=address,a.vice=vice,a.status=status
+};
+
+ACT UpdateCustomer1 ver 0.1 (
+	#Customer
+) {
+	WITH Customer as a ID=id SET a.name=name,a.tel=tel,a.address=address,a.vice=vice,a.status=status
+};
+
+Query queryCustomerByID ver 0.1 (
+	id ID
+)
+RETURNS ret (
+	id ID,
+	no CHAR(100),
+	name CHAR(50),
+	tel CHAR(50),
+	address CHAR(500),
+	vice CHAR(100),
+	status INT,
+)
+{
+	INTO ret SELECT a.id, a.no, a.name, a.tel,a.address,a.vice,a.status
+	FROM Customer as a
+	WHERE a.id = id;
+};
+
+QUERY queryCustomerByID1 ver 0.1 (
+	id ID
+) 
+RETURNS ret (
+	#Customer
+)
+{
+	INTO ret SELECT a.id, a.no, a.name, a.tel,a.address,a.vice,a.status
+		FROM Customer as a
+		WHERE a.id = id;
+};

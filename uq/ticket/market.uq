@@ -1,0 +1,17 @@
+ID Market (
+    id,
+    KEY no,
+    name CHAR(50),
+    vice CHAR(200),
+    icon CHAR(100),
+);
+
+IX IxMarket (
+    ix Market,
+    xi Market,              -- sub market
+);
+
+IX IxMarketTicket (
+    ix Market,
+    xi Ticket,
+);

@@ -1,0 +1,76 @@
+ID Product ver 0.1 GLOBAL (
+	id,
+	KEY no,
+	name CHAR(50),
+	version CHAR(50),
+	desc CHAR(500),
+	preNo CHAR(50),
+	isbackend INT,
+	backVersionNo CHAR(100),
+	status INT,
+);
+
+ACT UpdateProduct ver 0.1 (
+	id ID, 
+	name CHAR(50),
+	version CHAR(50),
+	desc CHAR(500),
+	preNo CHAR(50),
+	isbackend INT,
+	backVersionNo CHAR(100),
+	status INT,
+) {
+	WITH Product as a ID=id SET 
+	a.name=name,
+	a.version=version,
+	a.desc=desc,
+	a.preNo=preNo,
+	a.isbackend=isbackend,
+	a.backVersionNo=backVersionNo,
+	a.status=status
+};
+
+ACT UpdateProduct1 ver 0.1 (
+	#Product
+) {
+	WITH Product as a ID=id SET 
+	a.name=name,
+	a.version=version,
+	a.desc=desc,
+	a.preNo=preNo,
+	a.isbackend=isbackend,
+	a.backVersionNo=backVersionNo,
+	a.status=status
+};
+
+Query queryProductByID (
+	id ID
+)
+RETURNS ret (
+	id ID,
+	no CHAR(100),
+	name CHAR(50),
+	version CHAR(50),
+	desc CHAR(500),
+	preNo CHAR(50),
+	isbackend INT,
+	backVersionNo CHAR(100),
+	status INT
+)
+{
+	INTO ret SELECT a.id, a.no, a.name,a.version,a.desc,a.preNo,a.isbackend,a.backVersionNo,a.status
+	FROM Product as a
+	WHERE a.id = id;
+};
+
+Query queryProductByID1 (
+	id ID
+)
+RETURNS ret (
+	#Product
+)
+{
+	INTO ret SELECT a.id, a.no, a.name,a.version,a.desc,a.preNo,a.isbackend,a.backVersionNo,a.status
+	FROM Product as a
+	WHERE a.id = id;
+};

@@ -1,0 +1,5 @@
+ID Staff ver 0.3 GLOBAL (
+	id,
+	KEY no,
+	name CHAR(30),
+);
